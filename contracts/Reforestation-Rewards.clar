@@ -339,9 +339,7 @@
 
 (define-map tree-tips
     uint
-    {
-        total: uint,
-    }
+    { total: uint }
 )
 
 (define-map donor-tips
@@ -349,21 +347,32 @@
         tree-id: uint,
         donor: principal,
     }
-    {
-        amount: uint,
-    }
+    { amount: uint }
 )
 
-(define-public (tip-tree (tree-id uint) (amount uint))
+(define-public (tip-tree
+        (tree-id uint)
+        (amount uint)
+    )
     (let (
             (tree (unwrap! (map-get? trees tree-id) ERR_NOT_FOUND))
             (donor tx-sender)
-            (prev-donor (get amount (default-to { amount: u0 } (map-get? donor-tips { tree-id: tree-id, donor: donor }))))
+            (prev-donor (get amount
+                (default-to { amount: u0 }
+                    (map-get? donor-tips {
+                        tree-id: tree-id,
+                        donor: donor,
+                    })
+                )))
             (prev-total (get total (default-to { total: u0 } (map-get? tree-tips tree-id))))
         )
         (asserts! (> amount u0) ERR_INVALID_AMOUNT)
         (try! (stx-transfer? amount donor (get planter tree)))
-        (map-set donor-tips { tree-id: tree-id, donor: donor } { amount: (+ prev-donor amount) })
+        (map-set donor-tips {
+            tree-id: tree-id,
+            donor: donor,
+        } { amount: (+ prev-donor amount) }
+        )
         (map-set tree-tips tree-id { total: (+ prev-total amount) })
         (ok amount)
     )
@@ -373,6 +382,15 @@
     (get total (default-to { total: u0 } (map-get? tree-tips tree-id)))
 )
 
-(define-read-only (get-donor-tip (tree-id uint) (donor principal))
-    (get amount (default-to { amount: u0 } (map-get? donor-tips { tree-id: tree-id, donor: donor })))
+(define-read-only (get-donor-tip
+        (tree-id uint)
+        (donor principal)
+    )
+    (get amount
+        (default-to { amount: u0 }
+            (map-get? donor-tips {
+                tree-id: tree-id,
+                donor: donor,
+            })
+        ))
 )
